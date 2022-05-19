@@ -1,0 +1,23 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: http-fileserver
+spec:
+  selector:
+    app: fileserver
+  ports:
+    - port: 80
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: http-fileserver
+  labels:
+    app: fileserver
+spec:
+  containers:
+    - name: http-fileserver
+      image: adityapandey/cloud-ml-frontend-2
+      imagePullPolicy: Always
+      ports:
+        - containerPort: 80
