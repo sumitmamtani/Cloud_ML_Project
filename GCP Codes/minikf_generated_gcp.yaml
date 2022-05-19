@@ -1,0 +1,220 @@
+metadata:
+  name: mnist-e2e-4
+  namespace: kubeflow-user
+  selfLink: /apis/kubeflow.org/v1beta1/namespaces/kubeflow-user/experiments/mnist-e2e-4
+  uid: 1d8aa2ea-95a1-46f3-b2bf-f09df93bc597
+  resourceVersion: '86466'
+  generation: 1
+  creationTimestamp: '2022-05-03T23:26:18Z'
+  finalizers:
+    - update-prometheus-metrics
+  managedFields:
+    - manager: Swagger-Codegen
+      operation: Update
+      apiVersion: kubeflow.org/v1beta1
+      time: '2022-05-03T23:26:18Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:spec:
+          .: {}
+          f:algorithm:
+            .: {}
+            f:algorithmName: {}
+          f:maxFailedTrialCount: {}
+          f:maxTrialCount: {}
+          f:objective:
+            .: {}
+            f:goal: {}
+            f:objectiveMetricName: {}
+            f:type: {}
+          f:parallelTrialCount: {}
+          f:parameters: {}
+          f:trialTemplate:
+            .: {}
+            f:primaryContainerName: {}
+            f:trialParameters: {}
+            f:trialSpec:
+              .: {}
+              f:apiVersion: {}
+              f:kind: {}
+              f:spec:
+                .: {}
+                f:tfReplicaSpecs:
+                  .: {}
+                  f:Chief:
+                    .: {}
+                    f:replicas: {}
+                    f:restartPolicy: {}
+                    f:template:
+                      .: {}
+                      f:metadata:
+                        .: {}
+                        f:annotations:
+                          .: {}
+                          f:sidecar.istio.io/inject: {}
+                      f:spec:
+                        .: {}
+                        f:containers: {}
+                  f:Worker:
+                    .: {}
+                    f:replicas: {}
+                    f:restartPolicy: {}
+                    f:template:
+                      .: {}
+                      f:metadata:
+                        .: {}
+                        f:annotations:
+                          .: {}
+                          f:sidecar.istio.io/inject: {}
+                      f:spec:
+                        .: {}
+                        f:containers: {}
+    - manager: katib-controller
+      operation: Update
+      apiVersion: kubeflow.org/v1beta1
+      time: '2022-05-03T23:31:20Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:finalizers:
+            .: {}
+            v:"update-prometheus-metrics": {}
+        f:status:
+          .: {}
+          f:completionTime: {}
+          f:conditions: {}
+          f:currentOptimalTrial:
+            .: {}
+            f:bestTrialName: {}
+            f:observation:
+              .: {}
+              f:metrics: {}
+            f:parameterAssignments: {}
+          f:startTime: {}
+          f:succeededTrialList: {}
+          f:trials: {}
+          f:trialsSucceeded: {}
+spec:
+  parameters:
+    - name: learning_rate
+      parameterType: double
+      feasibleSpace:
+        max: '0.05'
+        min: '0.01'
+    - name: batch_size
+      parameterType: int
+      feasibleSpace:
+        max: '100'
+        min: '80'
+  objective:
+    type: minimize
+    goal: 0.001
+    objectiveMetricName: loss
+    metricStrategies:
+      - name: loss
+        value: min
+  algorithm:
+    algorithmName: random
+  trialTemplate:
+    trialSpec:
+      apiVersion: kubeflow.org/v1
+      kind: TFJob
+      spec:
+        tfReplicaSpecs:
+          Chief:
+            replicas: 1
+            restartPolicy: OnFailure
+            template:
+              metadata:
+                annotations:
+                  sidecar.istio.io/inject: 'false'
+              spec:
+                containers:
+                  - command:
+                      - python
+                      - /opt/model.py
+                      - '--tf-train-steps=200'
+                      - '--tf-learning-rate=${trialParameters.learningRate}'
+                      - '--tf-batch-size=${trialParameters.batchSize}'
+                    image: docker.io/liuhougangxa/tf-estimator-mnist
+                    name: tensorflow
+          Worker:
+            replicas: 1
+            restartPolicy: OnFailure
+            template:
+              metadata:
+                annotations:
+                  sidecar.istio.io/inject: 'false'
+              spec:
+                containers:
+                  - command:
+                      - python
+                      - /opt/model.py
+                      - '--tf-train-steps=200'
+                      - '--tf-learning-rate=${trialParameters.learningRate}'
+                      - '--tf-batch-size=${trialParameters.batchSize}'
+                    image: docker.io/liuhougangxa/tf-estimator-mnist
+                    name: tensorflow
+    trialParameters:
+      - name: learningRate
+        description: Learning rate for the training model
+        reference: learning_rate
+      - name: batchSize
+        description: Batch size for the model
+        reference: batch_size
+    primaryPodLabels:
+      job-role: master
+    primaryContainerName: tensorflow
+    successCondition: status.conditions.#(type=="Succeeded")#|#(status=="True")#
+    failureCondition: status.conditions.#(type=="Failed")#|#(status=="True")#
+  parallelTrialCount: 2
+  maxTrialCount: 5
+  maxFailedTrialCount: 3
+  metricsCollectorSpec:
+    collector:
+      kind: StdOut
+  resumePolicy: LongRunning
+status:
+  startTime: '2022-05-03T23:26:18Z'
+  completionTime: '2022-05-03T23:31:20Z'
+  conditions:
+    - type: Created
+      status: 'True'
+      reason: ExperimentCreated
+      message: Experiment is created
+      lastUpdateTime: '2022-05-03T23:26:18Z'
+      lastTransitionTime: '2022-05-03T23:26:18Z'
+    - type: Running
+      status: 'False'
+      reason: ExperimentRunning
+      message: Experiment is running
+      lastUpdateTime: '2022-05-03T23:31:20Z'
+      lastTransitionTime: '2022-05-03T23:31:20Z'
+    - type: Succeeded
+      status: 'True'
+      reason: ExperimentMaxTrialsReached
+      message: Experiment has succeeded because max trial count has reached
+      lastUpdateTime: '2022-05-03T23:31:20Z'
+      lastTransitionTime: '2022-05-03T23:31:20Z'
+  currentOptimalTrial:
+    bestTrialName: mnist-e2e-4-633cf227
+    parameterAssignments:
+      - name: learning_rate
+        value: '0.049800971349920224'
+      - name: batch_size
+        value: '93'
+    observation:
+      metrics:
+        - name: loss
+          min: '0.20471959'
+          max: '2.2952085'
+          latest: '0.20471959'
+  succeededTrialList:
+    - mnist-e2e-4-8812088f
+    - mnist-e2e-4-c9346c9d
+    - mnist-e2e-4-f1078ed2
+    - mnist-e2e-4-1b1b7fa1
+    - mnist-e2e-4-633cf227
+  trials: 5
+  trialsSucceeded: 5
+
